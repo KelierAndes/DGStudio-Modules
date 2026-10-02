@@ -1,10 +1,12 @@
 # DGStudio 联动模块开发文档（模块 SDK）
 
-> 本文档随模块代码一起维护于 **DGStudio-Modules** 仓库。DGStudio 的一切联动
-> （VRChat OSC、游戏数据、未来的 MQTT/硬件外设……）都是**联动模块**：放在
-> `modules/` 下的 Python 文件夹，经 DGStudio「模块」页从本仓库下载、实时装卸，
-> 无需重启。模块通过 `ModuleContext`（下文简称 `ctx`）访问引擎的命令层、
-> 强度参数 API、设备状态与事件总线；私有设置自动持久化。
+> 本文档维护于模块市场总仓库 **DGStudio-Modules**。DGStudio 的一切联动
+> （VRChat OSC、游戏数据、未来的 MQTT/硬件外设……）都是**联动模块**：每个
+> 模块一个独立 GitHub 仓库（`ds-studio-modules-<模块 id>`，与 AstrBot 插件
+> 仓库同模式），总仓库经 Actions 聚合各子仓库生成市场清单 `market.yaml`，
+> DGStudio「模块」页只读该清单并按需下载、实时装卸、热重载。模块通过
+> `ModuleContext`（下文简称 `ctx`）访问引擎的命令层、强度参数 API、设备
+> 状态与事件总线；私有设置自动持久化。
 
 ---
 
@@ -12,15 +14,25 @@
 
 ### 1.1 目录与文件
 
-**模块仓库（DGStudio-Modules，本仓库）——模块源码与清单：**
+**模块仓库（每模块一个，命名 `ds-studio-modules-<id>`）——模块源码：**
+
+```
+ds-studio-modules-<id>/
+├── modules/<id>/plugin.py      模块入口：META 字典 + 模块类（单文件模块可直放仓库根）
+├── modules/<id>/requirements.txt  pip 依赖串（可选；随模块下载、安装时自动补装）
+├── modules/<id>/mods/          可选：携带的游戏端模组（一键释放到游戏目录）
+├── tests/                      模块单测（需核心源码，见文末）
+├── README.md / LICENSE
+```
+
+**总仓库（DGStudio-Modules，本仓库）——市场聚合：**
 
 ```
 DGStudio-Modules/
-├── modules/<id>/plugin.py      模块入口：META 字典 + 模块类
-├── registry.json               可用模块清单（_tools/build_registry.py 生成）
-├── _tools/build_registry.py    扫描 modules/ 重建清单
-├── tests/                      模块单测（需核心源码，见文末）
-└── EXTENSIONS.md               本文档
+├── market.yaml                 市场清单（Actions 聚合各子仓库自动生成）
+├── sources.txt                 API 发现失败时的手工兜底清单
+├── _tools/build_market.py      聚合解析工具（CI / 本地双模式）
+└── .github/workflows/market.yml  定时/手动重建 market.yaml
 ```
 
 **应用目录（DGStudio 运行时）——宿主与产物：**
@@ -36,10 +48,11 @@ DGStudio/
     └── <settings_key|id>.json  各模块私有设置
 ```
 
-每个模块一个文件夹，**最少只需一个 `plugin.py`**。包形式（`__init__.py` +
-任意多文件，推荐拆文件时用）与散文件形式（只有 `plugin.py`）都能加载；
-打包版 exe 运行时放入新模块同样生效。模块需要的第三方依赖**不进核心、
-也不随模块仓库发布**，由 `META["dependencies"]` 声明（§1.4），安装时自动补装。
+每个模块一个仓库、一个文件夹，**最少只需一个 `plugin.py`**。包形式
+（`__init__.py` + 任意多文件，推荐拆文件时用，放在 `modules/<id>/` 下）与
+仓库根直放的散文件形式都能被市场解析、被宿主加载；打包版 exe 运行时放入
+新模块同样生效。模块需要的第三方依赖**不进核心、不随软件分发**，写入模块
+仓库的 `requirements.txt`（§1.4），安装时自动补装。
 
 ### 1.2 最小模块
 
@@ -108,31 +121,37 @@ class HelloModule(ModuleBase):
 * **安装** = 补装依赖 + 启用状态置真（重启后自动加载）+ 立即加载并启动；
   **卸载** = 停止 + 移除实例 + 启用置假。模块**文件不会被删除**；
   模块页另有「删除」按钮移除磁盘文件（可随时从在线列表重新下载）；
+* **热重载**：卸载时宿主清理该模块的全部导入缓存（sys.modules 条目与
+  `__pycache__`）并摘除其私有依赖路径——「卸载 → 安装」与「更新」无需
+  重启应用即可运行新代码；
 * `start`/`stop` 运行在引擎 asyncio 循环上，可直接 `await`；
   非异步上下文用 `ctx.submit(coro)` 提交（返回 Future）；
 * 事件回调运行在引擎线程或协议接收线程：只做轻量处理，**不操作 UI、
   不阻塞**，耗时逻辑用 `ctx.submit()` 切回引擎循环。
 
-### 1.4 依赖声明（META["dependencies"]）
+### 1.4 依赖声明（requirements.txt）
 
-模块的第三方依赖在 `META` 中以 **pip 依赖串列表**声明，模块页
-「安装并启动」时自动检查并补装（模块页也提供「安装依赖」按钮手动触发）：
+模块的第三方依赖写在模块仓库的 **`requirements.txt`**（放在模块目录内，
+随模块一起下载），模块页「安装并启动」时自动读取并 pip 补装缺失项
+（模块页也提供「安装依赖」按钮手动触发）：
 
-```python
-META = {
-    ...,
-    "dependencies": ["python-osc>=1.9"],          # 必装依赖
-    # 可选依赖以「!」前缀声明：--no-deps 尽力安装，失败不阻断安装
-    # "dependencies": ["opencv-python-headless>=4.10", "!rapidocr-onnxruntime>=1.4.4"],
-}
 ```
+python-osc>=1.9                      # 必装依赖
+# 可选依赖以「!」前缀声明：安装时以 --no-deps 尽力安装，失败不阻断
+# 手动 pip install -r 时请跳过这些行
+!rapidocr-onnxruntime>=1.4.4
+```
+
+无 `requirements.txt` 时回退读 `META["dependencies"]`（旧式声明，等价的
+pip 依赖串列表），仅作兼容保留。
 
 * **源码运行**（`python main.py`）：装进当前解释器环境（venv）；
 * **打包 exe**：装进模块私有 `modules/<id>/_deps/`，宿主装载该模块前会
   把目录挂到 `sys.path` 最前——打包版内嵌 pip，无需目标机安装 Python；
 * 可用性探测按「环境元数据 → `_deps` 目录元数据 → import 名探测」进行，
   pip 包名与 import 名不一致（如 `opencv-python-headless` → `cv2`）自动映射；
-* 清单 `registry.json` 同步记录依赖串，模块页下载前即可展示。
+* 市场清单 `market.yaml` 由总仓库 Actions 解析各子仓库的 requirements.txt
+  生成，模块页下载前即可展示依赖。
 
 ---
 
@@ -362,15 +381,15 @@ META = {
 * **日志**：`ctx.log()` 进日志页与 `dgstudio.log`；异常栈全文落日志；
 * **加载失败**：模块页「扫描模块目录」后如实显示。常见错误：`META` 非字面量、
   未定义模块类、`plugin.py` 顶层抛异常、依赖缺失（先点「安装依赖」）；
-* **热重载**：卸载再安装会重新实例化，但 **Python 代码不会自动重载**
-  （进程内缓存）——开发时改完代码请重启应用；
-* **发布**：提交到本仓库 main 分支即可——CI 自动重建 `registry.json`，
-  DGStudio「模块」页随后即可检索、下载与更新；本地验证可手动运行
-  `python _tools/build_registry.py`；
-* **测试**：模块逻辑可脱离 UI 单测。`tests/` 下每个测试文件先
-  `import _bootstrap` 定位核心源码（核心仓库放同级目录，或设环境变量
-  `DGSTUDIO_CORE`），随后照常 `from dglab…` / `from modules.<id>…` 导入；
-  运行 `python -m unittest discover -s tests`。
+* **热重载**：卸载会清空该模块的导入缓存与 pyc——改完代码「卸载 → 安装」
+  或模块页「更新」即运行新代码，无需重启应用；
+* **发布**：推送自己的 `ds-studio-modules-*` 仓库，总仓库 Actions 定期
+  （每日）重建 `market.yaml`，需要立即上架可到总仓库手动 Run workflow；
+  本地验证可直接运行 `python _tools/build_market.py --local <仓库所在目录>`；
+* **测试**：模块单测放在**各自模块仓库**的 `tests/` 下。每个测试文件先
+  `import _bootstrap` 定位核心源码（核心仓库与模块仓库放同一父目录，或设
+  环境变量 `DGSTUDIO_CORE`），随后照常 `from dglab…` / `from modules.<id>…`
+  导入；在模块仓库根运行 `python -m unittest discover -s tests`。
 
 ---
 

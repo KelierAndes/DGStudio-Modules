@@ -1,0 +1,41 @@
+name: build market
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    # 每日一次：各子仓库的推送无法直接触发本仓库 workflow，
+    # 子仓库更新后最迟一天内进入市场；需要立即刷新可手动 dispatch。
+    - cron: "23 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  market:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Discover sub-repos and rebuild market.yaml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MARKET_OWNER: KelierAndes
+        run: python _tools/build_market.py --owner "$MARKET_OWNER"
+
+      - name: Commit if changed
+        run: |
+          if [[ -n "$(git status --porcelain market.yaml)" ]]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add market.yaml
+            git commit -m "chore: rebuild market.yaml"
+            git push
+          else
+            echo "market.yaml unchanged"
+          fi

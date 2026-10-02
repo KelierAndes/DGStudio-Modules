@@ -1,0 +1,49 @@
+# DGStudio 模块市场清单 —— 由 _tools/build_market.py 自动生成，勿手动编辑。
+schema: 1
+generated: "2026-10-02T14:49:04Z"
+source: "https://github.com/KelierAndes/DGStudio-Modules"
+modules:
+  - id: "alice_cradle"
+    repo: "ds-studio-modules-alice_cradle"
+    path: "modules/alice_cradle"
+    branch: "main"
+    author: "KelierAndes"
+    name: "Alice in Cradle 联动"
+    version: "0.6.0"
+    description: "游戏侧 MOD 仅上报 HP/MP 等命名数值，本模块按核心参数映射表求值驱动设备，并把设备状态表达式回传游戏（HTTP + JSON）。"
+    default_enabled: false
+    requirements: []
+    files: [".gitignore", "LICENSE", "README.md", "mods/AliceInCradleLink.dll", "modules/alice_cradle/__init__.py", "modules/alice_cradle/plugin.py", "modules/alice_cradle/requirements.txt", "modules/alice_cradle/server.py", "tests/_bootstrap.py", "tests/test_alice_cradle.py"]
+  - id: "osc_bridge"
+    repo: "ds-studio-modules-osc_bridge"
+    path: "modules/osc_bridge"
+    branch: "main"
+    author: "KelierAndes"
+    name: "VRChat OSC 联动"
+    version: "1.5.0"
+    description: "头像参数动态建表，核心参数映射表双向表达式驱动：设备数值经表达式写回头像参数，头像参数/游戏信号反向控制设备。"
+    default_enabled: false
+    requirements: ["python-osc>=1.9"]
+    files: [".gitignore", "LICENSE", "README.md", "modules/osc_bridge/__init__.py", "modules/osc_bridge/bridge.py", "modules/osc_bridge/plugin.py", "modules/osc_bridge/requirements.txt", "tests/_bootstrap.py", "tests/test_multi_device.py", "tests/test_osc_defaults.py", "tests/test_osc_runtime.py"]
+  - id: "strength_logger"
+    repo: "ds-studio-modules-strength_logger"
+    path: "modules/strength_logger"
+    branch: "main"
+    author: "KelierAndes"
+    name: "强度日志示例"
+    version: "0.1.0"
+    description: "演示模块 API：订阅强度变化写入应用日志（每设备限速 1 条/秒）。可作为开发新模块的模板。"
+    default_enabled: false
+    requirements: []
+    files: [".gitignore", "LICENSE", "README.md", "modules/strength_logger/plugin.py", "modules/strength_logger/requirements.txt"]
+  - id: "vision_link"
+    repo: "ds-studio-modules-vision_link"
+    path: "modules/vision_link"
+    branch: "main"
+    author: "KelierAndes"
+    name: "画面识别联动"
+    version: "0.3.1"
+    description: "OpenCV 通用画面识别：以「参数名 ← 检测行为」自定义实时参数（检测颜色 / 图片 / 数值 / 数值条，区域例图可截图选取，数字/文字 RapidOCR 识别），经核心参数映射表驱动设备。"
+    default_enabled: false
+    requirements: ["opencv-python-headless>=4.10", "!rapidocr-onnxruntime>=1.4.4", "!onnxruntime==1.19.2", "!pyclipper", "!Shapely", "!PyYAML", "!six", "!tqdm"]
+    files: [".gitignore", "LICENSE", "README.md", "modules/vision_link/__init__.py", "modules/vision_link/bridge.py", "modules/vision_link/detect.py", "modules/vision_link/plugin.py", "modules/vision_link/requirements.txt", "tests/_bootstrap.py", "tests/test_vision_link.py"]
