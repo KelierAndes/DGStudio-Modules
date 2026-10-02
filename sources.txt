@@ -1,7 +1,7 @@
 # 手工兜底清单：GitHub API 发现失败时按此列表拉取（每行一个仓库名，# 注释）。
-# 正常情况下 CI 会自动发现 owner 名下所有 ds-studio-modules-* 仓库；
+# 正常情况下 CI 会自动发现 owner 名下所有 dgstudio-modules-* 仓库；
 # 新建模块仓库后可在此追加一行以立即纳入，无需等待搜索索引。
-ds-studio-modules-alice_cradle
-ds-studio-modules-osc_bridge
-ds-studio-modules-strength_logger
-ds-studio-modules-vision_link
+dgstudio-modules-alice_cradle
+dgstudio-modules-osc_bridge
+dgstudio-modules-strength_logger
+dgstudio-modules-vision_link

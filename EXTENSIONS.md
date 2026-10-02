@@ -1,8 +1,8 @@
 # DGStudio 联动模块开发文档（模块 SDK）
 
-> 本文档维护于模块市场总仓库 **DGStudio-Modules**。DGStudio 的一切联动
+> 本文档维护于模块市场总仓库 **dgstudio-modules-market**。DGStudio 的一切联动
 > （VRChat OSC、游戏数据、未来的 MQTT/硬件外设……）都是**联动模块**：每个
-> 模块一个独立 GitHub 仓库（`ds-studio-modules-<模块 id>`，与 AstrBot 插件
+> 模块一个独立 GitHub 仓库（`dgstudio-modules-<模块 id>`，与 AstrBot 插件
 > 仓库同模式），总仓库经 Actions 聚合各子仓库生成市场清单 `market.yaml`，
 > DGStudio「模块」页只读该清单并按需下载、实时装卸、热重载。模块通过
 > `ModuleContext`（下文简称 `ctx`）访问引擎的命令层、强度参数 API、设备
@@ -14,10 +14,10 @@
 
 ### 1.1 目录与文件
 
-**模块仓库（每模块一个，命名 `ds-studio-modules-<id>`）——模块源码：**
+**模块仓库（每模块一个，命名 `dgstudio-modules-<id>`）——模块源码：**
 
 ```
-ds-studio-modules-<id>/
+dgstudio-modules-<id>/
 ├── modules/<id>/plugin.py      模块入口：META 字典 + 模块类（单文件模块可直放仓库根）
 ├── modules/<id>/requirements.txt  pip 依赖串（可选；随模块下载、安装时自动补装）
 ├── modules/<id>/mods/          可选：携带的游戏端模组（一键释放到游戏目录）
@@ -25,10 +25,10 @@ ds-studio-modules-<id>/
 ├── README.md / LICENSE
 ```
 
-**总仓库（DGStudio-Modules，本仓库）——市场聚合：**
+**总仓库（dgstudio-modules-market，本仓库）——市场聚合：**
 
 ```
-DGStudio-Modules/
+dgstudio-modules-market/
 ├── market.yaml                 市场清单（Actions 聚合各子仓库自动生成）
 ├── sources.txt                 API 发现失败时的手工兜底清单
 ├── _tools/build_market.py      聚合解析工具（CI / 本地双模式）
@@ -146,8 +146,10 @@ python-osc>=1.9                      # 必装依赖
 pip 依赖串列表），仅作兼容保留。
 
 * **源码运行**（`python main.py`）：装进当前解释器环境（venv）；
-* **打包 exe**：装进模块私有 `modules/<id>/_deps/`，宿主装载该模块前会
-  把目录挂到 `sys.path` 最前——打包版内嵌 pip，无需目标机安装 Python；
+* **打包 exe**：**首选模块自带 `wheels/`**（模块目录内；wheel 即 zip，
+  安装时逐个解包合并进私有 `modules/<id>/_deps/`，离线、按 dist-info 幂等），
+  剩余缺失才经宿主内置的真实 Python 子进程 pip 兜底——目标机无需安装
+  Python；`_deps/` 会在模块装载前挂到 `sys.path` 最前；
 * 可用性探测按「环境元数据 → `_deps` 目录元数据 → import 名探测」进行，
   pip 包名与 import 名不一致（如 `opencv-python-headless` → `cv2`）自动映射；
 * 市场清单 `market.yaml` 由总仓库 Actions 解析各子仓库的 requirements.txt
@@ -231,6 +233,37 @@ ctx.set_intensity_param("fire_strength", 80, slot_id=sid)  # 设备级覆盖
 | `ctx.fire_start(slot_id=None)` / `fire_stop(…)` | 按住持续开火（60 秒安全超时，结束恢复原强度/波形） |
 | `ctx.zap(channel, seconds, slot_id=None)` | 定时爆发（等价 fire） |
 | `ctx.emergency_stop()` | 急停：全部输出设备清零 + 波形重置 |
+
+---
+
+### 2.3 游戏模组携带与安装（通用接口）
+
+携带游戏端模组的模块在 META 里声明释放目标与定位标记：
+
+```python
+META = {"id": "...", ...,
+        "mods": {"dest": "BepInEx/plugins/<模组名>",   # 释放目标（相对游戏根）
+                 "marker": "Game.exe"}}                # 游戏主程序名（自动扫描定位）
+```
+
+并把载荷放进模块目录（随模块一起下载分发）：
+
+| 路径 | 内容 |
+|---|---|
+| `mods/` | 编译好的模组文件（释放到 dest 的内容） |
+| `mods/BepInEx/`（可选） | 需随模组合并安装的 BepInEx 文件 |
+| `vendor/BepInEx_win_*.zip`（可选） | BepInEx 5 官方发行包，目标缺 BepInEx 时自动安装用 |
+
+`ModuleContext` 通用接口（模块页「安装游戏模组」按钮走同一链路）：
+
+| 方法 | 说明 |
+|---|---|
+| `ctx.game_mods_dir()` | 模块携带的 `mods/` 目录（无载荷返回 `None`） |
+| `ctx.scan_game_roots(roots=None, max_depth=3)` | 按 marker 在盘符根浅层扫描游戏根目录（可传 `roots` 收敛范围） |
+| `ctx.install_game_mod(game_root)` | 释放模组到游戏根目录；缺 BepInEx 时自动安装（`mods/BepInEx/` → `vendor/` zip），目标不含游戏主程序抛 `ValueError` |
+
+alice_cradle 模块即示范实现：模组源码 `AliceInCradleLink/` +
+`dotnet build -t:Deploy` 产出 `mods/` 载荷 + `vendor/` 携带发行包。
 
 ---
 
@@ -383,7 +416,7 @@ META = {
   未定义模块类、`plugin.py` 顶层抛异常、依赖缺失（先点「安装依赖」）；
 * **热重载**：卸载会清空该模块的导入缓存与 pyc——改完代码「卸载 → 安装」
   或模块页「更新」即运行新代码，无需重启应用；
-* **发布**：推送自己的 `ds-studio-modules-*` 仓库，总仓库 Actions 定期
+* **发布**：推送自己的 `dgstudio-modules-*` 仓库，总仓库 Actions 定期
   （每日）重建 `market.yaml`，需要立即上架可到总仓库手动 Run workflow；
   本地验证可直接运行 `python _tools/build_market.py --local <仓库所在目录>`；
 * **测试**：模块单测放在**各自模块仓库**的 `tests/` 下。每个测试文件先

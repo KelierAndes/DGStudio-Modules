@@ -1,29 +1,29 @@
-# DGStudio 模块市场（DGStudio-Modules）
+# DGStudio 模块市场（dgstudio-modules-market）
 
 本仓库是 **DGStudio**（[DG-LAB-X-VRChat-OSC](https://github.com/KelierAndes/DG-LAB-X-VRChat-OSC)）
 的**模块市场总仓库**，采用与 AstrBot 插件生态一致的仓库管理方式：
 
-* **每个联动模块一个独立仓库**，命名 `ds-studio-modules-<模块 id>`；
+* **每个联动模块一个独立仓库**，命名 `dgstudio-modules-<模块 id>`；
 * 本总仓库通过 **GitHub Actions** 自动发现、拉取并解析各子仓库，
   生成统一的市场清单 [`market.yaml`](market.yaml)；
 * DGStudio「模块」页（模组市场）**只读取 market.yaml** 这一个配置文件，
   下载模块时再按清单指向的子仓库取文件。
 
 ```
-ds-studio-modules-osc_bridge ─────┐
-ds-studio-modules-alice_cradle ───┤   GitHub Actions（每日 / 手动）
-ds-studio-modules-vision_link ────┼──────────────────────► market.yaml ◄── DGStudio 模块页读取
-ds-studio-modules-strength_logger─┘      拉取 + 解析 META / requirements.txt
+dgstudio-modules-osc_bridge ─────┐
+dgstudio-modules-alice_cradle ───┤   GitHub Actions（每日 / 手动）
+dgstudio-modules-vision_link ────┼──────────────────────► market.yaml ◄── DGStudio 模块页读取
+dgstudio-modules-strength_logger─┘      拉取 + 解析 META / requirements.txt
 ```
 
 ## 模块列表
 
 | 模块 | 仓库 | 版本 | 依赖 | 说明 |
 |---|---|---|---|---|
-| **VRChat OSC 联动** | [ds-studio-modules-osc_bridge](https://github.com/KelierAndes/ds-studio-modules-osc_bridge) | 1.5.0 | `python-osc` | 头像参数动态建表，核心参数映射表双向表达式驱动 |
-| **Alice in Cradle 联动** | [ds-studio-modules-alice_cradle](https://github.com/KelierAndes/ds-studio-modules-alice_cradle) | 0.6.0 | 无（标准库） | 游戏侧 MOD 上报 HP/MP 等数值，映射表求值驱动设备并回传状态；携带 BepInEx 游戏模组 |
-| **画面识别联动** | [ds-studio-modules-vision_link](https://github.com/KelierAndes/ds-studio-modules-vision_link) | 0.3.1 | `opencv-python-headless`（OCR 可选） | OpenCV 检测屏幕画面（颜色/图片/数值/数值条）产生实时参数 |
-| **强度日志示例** | [ds-studio-modules-strength_logger](https://github.com/KelierAndes/ds-studio-modules-strength_logger) | 0.1.0 | 无（标准库） | 最小完整示例：订阅强度变化写入日志，可作开发模板 |
+| **VRChat OSC 联动** | [dgstudio-modules-osc_bridge](https://github.com/KelierAndes/dgstudio-modules-osc_bridge) | 1.5.0 | `python-osc` | 头像参数动态建表，核心参数映射表双向表达式驱动 |
+| **Alice in Cradle 联动** | [dgstudio-modules-alice_cradle](https://github.com/KelierAndes/dgstudio-modules-alice_cradle) | 0.6.0 | 无（标准库） | 游戏侧 MOD 上报 HP/MP 等数值，映射表求值驱动设备并回传状态；携带 BepInEx 游戏模组 |
+| **画面识别联动** | [dgstudio-modules-vision_link](https://github.com/KelierAndes/dgstudio-modules-vision_link) | 0.3.1 | `opencv-python-headless`（OCR 可选） | OpenCV 检测屏幕画面（颜色/图片/数值/数值条）产生实时参数 |
+| **强度日志示例** | [dgstudio-modules-strength_logger](https://github.com/KelierAndes/dgstudio-modules-strength_logger) | 0.1.0 | 无（标准库） | 最小完整示例：订阅强度变化写入日志，可作开发模板 |
 
 实际可用版本以 [`market.yaml`](market.yaml) 为准。
 
@@ -46,7 +46,7 @@ ds-studio-modules-strength_logger─┘      拉取 + 解析 META / requirements
 
 ## 发布一个新模块
 
-1. 新建仓库，命名 **`ds-studio-modules-<模块 id>`**（必须以该前缀开头）；
+1. 新建仓库，命名 **`dgstudio-modules-<模块 id>`**（必须以该前缀开头）；
 2. 仓库根放置：
    * `plugin.py` —— 模块入口（`META` 纯字面量 + 模块类），`META["id"]` 与
      仓库后缀一致；
@@ -63,7 +63,7 @@ ds-studio-modules-strength_logger─┘      拉取 + 解析 META / requirements
 ## 清单生成
 
 * `_tools/build_market.py`：
-  * CI 模式（默认）：`GITHUB_TOKEN` 经 GitHub API 搜索 `ds-studio-modules-`
+  * CI 模式（默认）：`GITHUB_TOKEN` 经 GitHub API 搜索 `dgstudio-modules-`
     前缀仓库 → 逐仓库读取 `plugin.py`（AST 解析 META）、`requirements.txt`、
     文件树，写出 `market.yaml`；
   * 本地模式（`--local <目录>`）：扫描目录下匹配前缀的仓库文件夹直接生成，

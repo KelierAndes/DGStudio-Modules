@@ -1,16 +1,16 @@
-r"""聚合 ds-studio-modules-* 子仓库，生成模块市场清单 market.yaml。
+r"""聚合 dgstudio-modules-* 子仓库，生成模块市场清单 market.yaml。
 
 DGStudio「模块」页只读取本文件（总仓库根的 market.yaml），不直接访问
 各子仓库。清单由 GitHub Actions 定期重建，也可本地生成后提交：
 
-    # CI / 联网：经 GitHub API 发现 owner 名下 ds-studio-modules-* 仓库
+    # CI / 联网：经 GitHub API 发现 owner 名下 dgstudio-modules-* 仓库
     GITHUB_TOKEN=xxx python _tools/build_market.py --owner KelierAndes
 
     # 本地离线：扫描目录下匹配前缀的仓库文件夹（如 D:\ 下的各仓库）
     python _tools/build_market.py --local D:\
 
 规则（与 AstrBot 插件仓库一致的模式）：
-* 每个模块一个独立仓库，命名 ds-studio-modules-<模块 id>；
+* 每个模块一个独立仓库，命名 dgstudio-modules-<模块 id>；
 * 仓库根必须含 plugin.py（META 纯字面量），可选 requirements.txt
   （pip 依赖串，「!」前缀 = 可选依赖 --no-deps 安装）、README.md；
 * 输出按模块 id 排序，字符串以 JSON 风格双引号写入（合法 YAML）。
@@ -28,8 +28,8 @@ import time
 import urllib.request
 
 DEFAULT_OWNER = "KelierAndes"
-DEFAULT_PREFIX = "ds-studio-modules-"
-MASTER_REPO = "DGStudio-Modules"
+DEFAULT_PREFIX = "dgstudio-modules-"
+MASTER_REPO = "dgstudio-modules-market"
 DEFAULT_BRANCH = "main"
 SKIP_DIRS = {".git", "__pycache__", "_deps"}
 SKIP_SUFFIX = (".downloading", ".old")
