@@ -1,0 +1,9 @@
+# ===== 本地环境与中间产物 =====
+__pycache__/
+*.pyc
+.vs/
+
+# ===== 模块运行时附属物（依赖装到模块私有目录；下载临时区）=====
+modules/*/_deps/
+modules/*.downloading/
+modules/*.old/
