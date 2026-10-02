@@ -9,6 +9,7 @@
       "dependencies": [],
       "path": "modules/alice_cradle",
       "files": [
+        "README.md",
         "__init__.py",
         "mods/AliceInCradleLink.dll",
         "plugin.py",
@@ -25,6 +26,7 @@
       ],
       "path": "modules/osc_bridge",
       "files": [
+        "README.md",
         "__init__.py",
         "bridge.py",
         "plugin.py"
@@ -38,6 +40,7 @@
       "dependencies": [],
       "path": "modules/strength_logger",
       "files": [
+        "README.md",
         "plugin.py"
       ]
     },
@@ -58,6 +61,7 @@
       ],
       "path": "modules/vision_link",
       "files": [
+        "README.md",
         "__init__.py",
         "bridge.py",
         "detect.py",
