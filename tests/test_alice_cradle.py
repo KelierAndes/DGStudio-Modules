@@ -218,10 +218,10 @@ class LifecycleTests(unittest.IsolatedAsyncioTestCase):
 
 class PluginMetaTests(unittest.TestCase):
     def test_meta_is_literal_and_class_found(self):
-        import os
+        import _bootstrap
         import plugins
 
-        path = os.path.join(os.path.dirname(plugins.__file__),
+        path = os.path.join(_bootstrap.HERE,
                             "modules", "alice_cradle", "plugin.py")
         meta = plugins._read_meta(path)
         self.assertEqual(meta["id"], "alice_cradle")

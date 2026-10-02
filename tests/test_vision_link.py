@@ -497,9 +497,10 @@ class MigrationTests(unittest.TestCase):
 
 class PluginTests(unittest.TestCase):
     def test_meta_literal_and_class(self):
+        import _bootstrap
         import plugins
 
-        path = os.path.join(os.path.dirname(plugins.__file__),
+        path = os.path.join(_bootstrap.HERE,
                             "modules", "vision_link", "plugin.py")
         meta = plugins._read_meta(path)
         self.assertEqual(meta["id"], "vision_link")
@@ -538,6 +539,16 @@ class PluginTests(unittest.TestCase):
             def _log(self, msg):
                 pass
 
+        import unittest.mock
+
+        import _bootstrap
+        import plugins
+
+        roots = unittest.mock.patch("plugins.module_roots",
+                                    return_value=[os.path.join(_bootstrap.HERE,
+                                                               "modules")])
+        roots.start()
+        self.addCleanup(roots.stop)
         manager = PluginManager(_Engine())
         self.assertTrue(manager.meta("vision_link")["realtime_manager"])
         self.assertFalse(manager.meta("strength_logger")["realtime_manager"])
