@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import base64
 import io
 import json
 import os
@@ -207,33 +208,47 @@ def discover_remote(owner: str, prefix: str, token: str) -> list[str]:
 def collect_remote(owner: str, repo: str, token: str) -> dict:
     info = _http_json(f"https://api.github.com/repos/{owner}/{repo}", token)
     branch = str(info.get("default_branch") or DEFAULT_BRANCH)
+    # 文件内容优先走 git blobs API（无 raw CDN 传播延迟），raw 兜底
+    blobs: dict[str, str] = {}
+
+    def blob_text(path: str) -> str:
+        sha = blobs.get(path)
+        if sha:
+            payload = _http_json(
+                f"https://api.github.com/repos/{owner}/{repo}"
+                f"/git/blobs/{sha}", token)
+            return base64.b64decode(payload.get("content") or "").decode("utf-8")
+        return _http_text(
+            f"https://raw.githubusercontent.com/{owner}/{repo}/{branch}/{path}",
+            token)
+
     files: list[str] = []
     try:
         tree = _http_json(
             f"https://api.github.com/repos/{owner}/{repo}/git/trees/{branch}"
             f"?recursive=1", token)
+        blobs = {item["path"]: item["sha"]
+                 for item in tree.get("tree") or []
+                 if item.get("type") == "blob"}
         if not tree.get("truncated"):
-            files = sorted(
-                item["path"] for item in tree.get("tree") or []
-                if item.get("type") == "blob" and not is_skipped(item["path"]))
+            files = sorted(path for path in blobs if not is_skipped(path))
     except Exception:
         files = []
     rel = ""
-    if "plugin.py" not in files:
+    if "plugin.py" not in blobs:
         for name in files:
             if name.startswith("modules/") and name.endswith("/plugin.py")                     and name.count("/") == 2:
                 rel = name.rsplit("/plugin.py", 1)[0]
                 break
-    base = f"{owner}/{repo}/{branch}" + (f"/{rel}" if rel else "")
-    meta = read_meta(_http_text(
-        f"https://raw.githubusercontent.com/{base}/plugin.py", token))
+    base = f"{rel}/" if rel else ""
+    meta = read_meta(blob_text(f"{base}plugin.py"))
     requirements: list[str] = []
-    try:
-        requirements = parse_requirements(_http_text(
-            f"https://raw.githubusercontent.com/{base}/requirements.txt",
-            token))
-    except Exception:
-        requirements = []
+    if f"{base}requirements.txt" in blobs or rel == "":
+        try:
+            requirements = parse_requirements(
+                blob_text(f"{base}requirements.txt"))
+        except Exception:
+            requirements = []
     return build_entry(repo, meta, requirements, files, branch,
                        str(info.get("owner", {}).get("login") or owner),
                        path=rel)
@@ -266,18 +281,20 @@ def main() -> int:
             print(f"[模块] {entry['id']} v{entry['version']} ← {entry['repo']}"
                   f"（本地）")
     else:
-        repos: list[str] = []
+        repos: list[str] = set()
         try:
-            repos = discover_remote(args.owner, args.prefix, token)
-            print(f"[发现] GitHub API 命中 {len(repos)} 个仓库")
+            found = discover_remote(args.owner, args.prefix, token)
+            print(f"[发现] GitHub API 命中 {len(found)} 个仓库")
+            repos.update(found)
         except Exception as exc:
-            print(f"[警告] GitHub API 发现失败（{exc}），回退 {args.sources}",
-                  file=sys.stderr)
-        if not repos and os.path.isfile(args.sources):
+            print(f"[警告] GitHub API 发现失败（{exc}）", file=sys.stderr)
+        if os.path.isfile(args.sources):
             with io.open(args.sources, encoding="utf-8") as f:
-                repos = [line.strip() for line in f
-                         if line.strip() and not line.strip().startswith("#")]
-            print(f"[发现] sources.txt 提供 {len(repos)} 个仓库")
+                listed = [line.strip() for line in f
+                          if line.strip() and not line.strip().startswith("#")]
+            print(f"[发现] sources.txt 提供 {len(listed)} 个仓库")
+            repos.update(listed)
+        repos = sorted(repos)
         failures = 0
         for repo in repos:
             try:
