@@ -5,3 +5,4 @@ dgstudio-modules-alice_cradle
 dgstudio-modules-osc_bridge
 dgstudio-modules-strength_logger
 dgstudio-modules-vision_link
+dgstudio-modules-xinput_oscillate
