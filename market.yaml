@@ -1,6 +1,6 @@
 # DGStudio 模块市场清单 —— 由 _tools/build_market.py 自动生成，勿手动编辑。
 schema: 1
-generated: "2026-10-03T15:35:33Z"
+generated: "2026-10-03T16:15:51Z"
 source: "https://github.com/KelierAndes/dgstudio-modules-market"
 modules:
   - id: "alice_cradle"
@@ -47,3 +47,14 @@ modules:
     default_enabled: false
     requirements: ["opencv-python-headless>=4.10", "!rapidocr-onnxruntime>=1.4.4", "!onnxruntime==1.19.2", "!pyclipper", "!Shapely", "!PyYAML", "!six", "!tqdm"]
     files: [".gitignore", "LICENSE", "README.md", "modules/__init__.py", "modules/vision_link/__init__.py", "modules/vision_link/bridge.py", "modules/vision_link/detect.py", "modules/vision_link/plugin.py", "modules/vision_link/requirements.txt", "modules/vision_link/wheels/numpy-2.5.3-cp312-cp312-win_amd64.whl", "modules/vision_link/wheels/onnxruntime-1.19.2-cp312-cp312-win_amd64.whl", "modules/vision_link/wheels/opencv_python_headless-5.0.0.93-cp37-abi3-win_amd64.whl", "modules/vision_link/wheels/pyclipper-1.4.0-cp312-cp312-win_amd64.whl", "modules/vision_link/wheels/pyyaml-6.0.3-cp312-cp312-win_amd64.whl", "modules/vision_link/wheels/rapidocr_onnxruntime-1.4.4-py3-none-any.whl", "modules/vision_link/wheels/shapely-2.1.2-cp312-cp312-win_amd64.whl", "modules/vision_link/wheels/six-1.17.0-py2.py3-none-any.whl", "modules/vision_link/wheels/tqdm-4.70.1-py3-none-any.whl", "tests/_bootstrap.py", "tests/test_vision_link.py"]
+  - id: "xinput_oscillate"
+    repo: "dgstudio-modules-xinput_oscillate"
+    path: "modules/xinput_oscillate"
+    branch: "main"
+    author: "KelierAndes"
+    name: "手柄震动联动（XInput）"
+    version: "0.2.0"
+    description: "经 ViGEm 虚拟手柄接收游戏原生 XInput 震动派发（不注入游戏），震动强度/状态经映射表达式驱动郊狼与负鼠；支持键盘键位映射（无手柄调试）、实体手柄透传与回环自测。"
+    default_enabled: false
+    requirements: []
+    files: [".gitignore", "LICENSE", "README.md", "modules/__init__.py", "modules/xinput_oscillate/__init__.py", "modules/xinput_oscillate/bin/LICENSE.ViGEmClient.txt", "modules/xinput_oscillate/bin/ViGEmClient.dll", "modules/xinput_oscillate/bridge.py", "modules/xinput_oscillate/plugin.py", "modules/xinput_oscillate/vigem.py", "modules/xinput_oscillate/virtualpad.py", "tests/_bootstrap.py", "tests/test_bridge.py", "tests/test_plugin.py", "tests/test_vigem_integration.py"]
