@@ -1,6 +1,6 @@
 # DGStudio 模块市场（dgstudio-modules-market）
 
-本仓库是 **DGStudio**（[DG-LAB-X-VRChat-OSC](https://github.com/KelierAndes/DG-LAB-X-VRChat-OSC)）
+本仓库是 **DGStudio**（[DG-LAB-Studio]([https://github.com/KelierAndes/DG-LAB-X-VRChat-OSC](https://github.com/KelierAndes/DG-Lab-Studio))）
 的**模块市场总仓库**，采用与 AstrBot 插件生态一致的仓库管理方式：
 
 * **每个联动模块一个独立仓库**，命名 `dgstudio-modules-<模块 id>`；
